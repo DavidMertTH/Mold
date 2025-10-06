@@ -1,0 +1,24 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> Result;
+
+float2 brushPos;    // UV in [0..1]
+float  brushRadius; // z.B. 0.05
+float4 brushColor;  // RGBA
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    Result.GetDimensions(width, height);
+
+    if (id.x >= width || id.y >= height) return;
+
+    float2 uv = (float2(id.x + 0.5, id.y + 0.5) / float2(width, height));
+
+    float d = distance(uv, brushPos);
+    float a = saturate(1.0 - d / brushRadius);  // weiche Kante
+
+    float4 prev = Result[id.xy];
+    Result[id.xy] = lerp(prev, brushColor, a);
+}
